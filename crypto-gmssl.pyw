@@ -9,16 +9,18 @@ ICONDATA = "eNrtlUtMG1cUhn97xmaCzTCOGYbxAwgQe8z7YQzGpU7G+NGxjR2wcWihTVIrEi1FJBJN
 
 class ask4key():
 	def __init__(self, master):
-		#master.config(state = DISABLED)
+		#######这里要阻塞root
 		self.top = Toplevel(master)
 		Label(self.top, text = u"请输入密钥：").grid(row = 0, column = 0)
-		self.keyInput = Entry(self.top).grid(row = 0, column = 1)
+		self.keyInput = Entry(self.top)
+		self.keyInput.grid(row = 0, column = 1)
 		Button(self.top, text = u"确认", command = self.cleanup).grid(row = 0, column = 2)
+		self.top.wait_window(self.top)
 
 	def cleanup(self):
 		self.key = self.keyInput.get()
 		self.top.destroy()
-		#master.config(state = NORMAL)
+		#######这里要恢复root阻塞
 
 class untitled:
 	root = Tk()
@@ -113,15 +115,16 @@ class untitled:
 	def sm4enc(self):
 		from gmssl.sm4 import CryptSM4, SM4_ENCRYPT, SM4_DECRYPT
 		inputKeyWindow = ask4key(self.root)
-		self.root.wait_window(inputKeyWindow)#######这里要阻塞子窗口
 		key = inputKeyWindow.key
 		with open(self.inputFile.get(), "rb") as f:
 			plainContent = f.read()
 		crypt_sm4 = CryptSM4()
 		crypt_sm4.set_key(key, SM4_ENCRYPT)
+		#######这里要先把明文转换成byte流
 		cipherContent = crypt_sm4.crypt_ecb(plainContent)
 
 		del(plainContent)
+		#######这里要先把密文转成字符串
 		with open(self.outputFile.get(), "wb") as f:
 			f.write(cipherContent)
 		del(cipherContent)
