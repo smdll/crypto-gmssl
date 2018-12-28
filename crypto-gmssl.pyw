@@ -39,26 +39,29 @@ class GUI:
 		self.root.resizable(width = False, height = False) #禁止改变窗口尺寸
 		self.root.title(u"gmssl-python")
 
-		Label(self.root, text = u"输入文件：").grid(row = 0, column = 0)
-		self.inputFile = Entry(self.root) #输入文件窗
-		self.inputFile.grid(row = 0, column = 1, columnspan = 5)
-		Button(self.root, text = u"打开", command = lambda: self.onOpen(1)).grid(row = 0, column = 6)
+		self.filePane = PanedWindow(self.root)
+		self.filePane.pack(expand = True, fill = BOTH)
+		Label(self.filePane, text = u"输入文件：").grid(row = 0, column = 0)
+		self.inputFile = Entry(self.filePane, width = 35) #输入文件窗
+		self.inputFile.grid(row = 0, column = 1)
+		Button(self.filePane, text = u"打开", command = lambda: self.onOpen(1)).grid(row = 0, column = 2)
 
-		Label(self.root, text = u"输出文件：").grid(row = 1, column = 0)
-		self.outputFile = Entry(self.root) #输出文件窗
-		self.outputFile.grid(row = 1, column = 1, columnspan = 5)
-		Button(self.root, text = u"打开", command = lambda: self.onOpen(2)).grid(row = 1, column = 6)
+		Label(self.filePane, text = u"输出文件：").grid(row = 1, column = 0)
+		self.outputFile = Entry(self.filePane, width = 35) #输出文件窗
+		self.outputFile.grid(row = 1, column = 1)
+		Button(self.filePane, text = u"打开", command = lambda: self.onOpen(2)).grid(row = 1, column = 2)
 
-		Label(self.root, text = u"算法:").grid(row = 2, column = 0)
+		self.optionPane = PanedWindow(self.root)
+		self.optionPane.pack(expand = True, fill = BOTH)
+		Label(self.optionPane, text = u"算法:").pack(side = LEFT)
 		self.selectedAlgorihm.set("SM4")
-		OptionMenu(self.root, self.selectedAlgorihm, "SM2", "SM4").grid(row = 2, column = 1) #算法选择
+		OptionMenu(self.optionPane, self.selectedAlgorihm, "SM2", "SM4").pack(side = LEFT) #算法选择
 
-		Button(self.root, text = u"加密", command = self.onEncrypt).grid(row = 2, column = 2)
-		Button(self.root, text = u"解密", command = self.onDecrypt).grid(row = 2, column = 3)
-		Button(self.root, text = u"签名", command = self.onSign).grid(row = 2, column = 4)
-		Button(self.root, text = u"验证", command = self.onVerify).grid(row = 2, column = 5)
-		Button(self.root, text = u"创建密钥对(SM2)", command = self.onGeneratePair).grid(row = 2, column = 6)
-		############控件没对齐
+		Button(self.optionPane, text = u"加密", command = self.onEncrypt).pack(side = LEFT)
+		Button(self.optionPane, text = u"解密", command = self.onDecrypt).pack(side = LEFT)
+		Button(self.optionPane, text = u"签名", command = self.onSign).pack(side = LEFT)
+		Button(self.optionPane, text = u"验证", command = self.onVerify).pack(side = LEFT)
+		Button(self.optionPane, text = u"创建密钥对(SM2)", command = self.onGeneratePair).pack(side = LEFT)
 		self.root.mainloop()
 
 	def onOpen(self, choise):
@@ -112,11 +115,50 @@ class GUI:
 		return True
 
 	def sm2enc(self):
-		pass
-		File = filedialog.askopenfilename(initialdir = ".", title = u"选择公钥")
+		from gmssl.sm2 import CryptSM2
+
+		pubKeyFile = filedialog.askopenfilename(initialdir = ".", title = u"选择公钥", filetypes = [("Public key", ("*.pub")), ("All files", "*.*")])
+		with open(pubKeyFile, 'rt') as f:
+			pubKey = f.read()
+		if len(pubKey) < 64:
+			messagebox.showerror(u"错误", u"公钥不正确！")
+			del(pubKey)
+			return
+
+		crypt_sm2 = CryptSM2(public_key = pubKey, private_key = None)
+		with open(self.inputFile.get(), "rb") as f:
+			plainContent = f.read()
+		cipherContent = crypt_sm2.encrypt(plainContent)
+
+		del(pubKey)
+		del(plainContent)
+		with open(self.outputFile.get(), "wb") as f:
+			f.write(cipherContent)
+		del(cipherContent)
+		messagebox.showinfo(u"加密结束", u"已写入%s"%self.outputFile.get())
 
 	def sm2dec(self):
-		pass
+		from gmssl.sm2 import CryptSM2
+
+		priKeyFile = filedialog.askopenfilename(initialdir = ".", title = u"选择私钥", filetypes = [("Public key", ("*.pri")), ("All files", "*.*")])
+		with open(priKeyFile, 'rt') as f:
+			priKey = f.read()
+		if len(priKey) < 32:
+			messagebox.showerror(u"错误", u"私钥不正确！")
+			del(priKey)
+			return
+
+		crypt_sm2 = CryptSM2(public_key = None, private_key = priKey)
+		with open(self.inputFile.get(), "rb") as f:
+			cipherContent = f.read()
+		plainContent = crypt_sm2.decrypt(cipherContent)
+
+		del(priKey)
+		del(cipherContent)
+		with open(self.outputFile.get(), "wb") as f:
+			f.write(plainContent)
+		del(plainContent)
+		messagebox.showinfo(u"解密结束", u"已写入%s"%self.outputFile.get())
 
 	def sm4enc(self):
 		from gmssl.sm4 import CryptSM4, SM4_ENCRYPT
@@ -137,7 +179,7 @@ class GUI:
 		with open(self.outputFile.get(), "wb") as f:
 			f.write(cipherContent)
 		del(cipherContent)
-		messagebox.showinfo(u"加密成功", u"已写入%s"%self.outputFile.get())
+		messagebox.showinfo(u"加密结束", u"已写入%s"%self.outputFile.get())
 
 	def sm4dec(self):
 		from gmssl.sm4 import CryptSM4, SM4_DECRYPT
@@ -158,7 +200,8 @@ class GUI:
 		with open(self.outputFile.get(), "wb") as f:
 			f.write(plainContent)
 		del(plainContent)
-		messagebox.showinfo(u"解密成功", u"已写入%s"%self.outputFile.get())
+		messagebox.showinfo(u"解密结束", u"已写入%s"%self.outputFile.get())
+		##########解密不对
 
 	def hashKey(self, inputStr, lengthBits):
 		from gmssl.sm3 import sm3_hash
