@@ -7,10 +7,14 @@ import tempfile, zlib, base64, os
 #图标数据
 ICONDATA = "eNrtlUtMG1cUhn97xmaCzTCOGYbxAwgQe8z7YQzGpU7G+NGxjR2wcWihTVIrEi1FJBJN3aIqRamaVLCoUKqoUlhUSFSkYkWlLiJRukbqojuWXbAo6qYSElKl0pnxk7Rdt4t8M3Pvufefc+89Z3Q0gEa+mpshtxS+oYB6AIL8yFO4gvy8CokymsIjYzKZQNM0ahkGY6KIEY8HDRyHVDyGtrY25BYW8MWDB7DwPMb8fmw9eYKO9nbcyGTg8/kwm05h+c4dfLW6is3Hj/Hlo0f4YWcHz589w+LtLOZuvInvt7awu7mJ7MwbcDgG0OuZwYi4hP7hm8gkE/j26VM4nT3ocU/D4bqKmbkf8f5nf+Dewz+RvfszXN0xXBb8eP32cySmv8atxZ+Qefs75D4/w8LHv2I0+AFCiVU8/OhDCB0i7q78jgZLC97N/YKu/kncm38Hi/d/Q+qtHbQ6fBgancPaJ/dxc+EA72Vv4dNcDuvr61hZWUE8FsPS0hKy2SzcAwNYXVvD/Pw8Tk9Psb+/j8PDQywvL2NjYwPHx8fY3t7G7Ows0uk0Tk5OsLe3h93dXRwcHODo6Ah93d04OzvDS17yv0OjQlS0lai69u8QhHwXdXq6TISOqEO5oQu6wW/9R/wGIq+zXI1bFN3iuKh2omyIIsuxhoI/O8VTpM7AGCmaZAw6MkIZyYjOUtAJ2d8UTk4xmevhUDLDTCUDwfj1hM7K6omizkupNBNPhcdTcSYdTQSTqWuKf0mvZUITlDSuI0MSNREK0qHQpOxf2p+biEiTFC9FvBJPTUpBWpKCJV32rzdJ0RgTj/Lj0TgTU9aPXlP0Ynz1PBm4QI8FjMHAGB0KhCOvBcKqTqi6mRNJo5E0kjJyZ1QMI18RP2fJU+zzg+L+epbjuHr5eoGK+DkLe9XEV1uVaYu5QTYtsl4+n9XW2tjUaL/UwnFW3t7W1Gyvaqnc39ZxxSkIrvZLFo7v6FRMb1VF/utaO3uFYY/QbWdr6J5eoa9PcNmry/l1D3qEV0Zf9Ti9I/5Bn+Bo9w4LjQ3mwv56s6I3DdmHBe9I9aCvt2toyKHo+sL+5jq6U3A1dRXX7+sfcLrsbMX3t112lM+XN0vnU85vtdkb5aDU+Gyt5+NT88OxhaTIlPNT+r4FVFnJtDoqrq+/aM5TZz5nXCzoGsO/UKwfgq6lShVH5IuQMenz9aW8cKFaXaqiZrXGGp02PyfrpE6r05wraq2+iirrWuKcu/Ljl4ta88Lkf8JfHMDVgw=="
 
-class ask4key():
-	def __init__(self, master):
+class ask4prompt():
+	def __init__(self, master, type):
 		self.top = Toplevel(master)
-		Label(self.top, text = u"请输入密钥：").grid(row = 0, column = 0)
+		if type == "key":
+			prompt = u"请输入密钥："
+		else:
+			prompt == u"请输入签名："
+		Label(self.top, text = prompt).grid(row = 0, column = 0)
 		self.keyInput = Entry(self.top, show = '*')
 		self.keyInput.grid(row = 0, column = 1)
 		self.keyInput.focus_set()
@@ -35,31 +39,26 @@ class GUI:
 		self.root.resizable(width = False, height = False) #禁止改变窗口尺寸
 		self.root.title(u"gmssl-python")
 
-		self.filePane = PanedWindow(self.root)
-		self.filePane.pack(fill = BOTH, expand = True)
+		Label(self.root, text = u"输入文件：").grid(row = 0, column = 0)
+		self.inputFile = Entry(self.root) #输入文件窗
+		self.inputFile.grid(row = 0, column = 1, columnspan = 5)
+		Button(self.root, text = u"打开", command = lambda: self.onOpen(1)).grid(row = 0, column = 6)
 
-		Label(self.filePane, text = u"输入文件：").grid(row = 0, column = 0)
-		self.inputFile = Entry(self.filePane) #输入文件窗
-		self.inputFile.grid(row = 0, column = 1)
-		Button(self.filePane, text = u"打开", command = lambda: self.onOpen(1)).grid(row = 0, column = 2)
+		Label(self.root, text = u"输出文件：").grid(row = 1, column = 0)
+		self.outputFile = Entry(self.root) #输出文件窗
+		self.outputFile.grid(row = 1, column = 1, columnspan = 5)
+		Button(self.root, text = u"打开", command = lambda: self.onOpen(2)).grid(row = 1, column = 6)
 
-		Label(self.filePane, text = u"输出文件：").grid(row = 1, column = 0)
-		self.outputFile = Entry(self.filePane) #输出文件窗
-		self.outputFile.grid(row = 1, column = 1)
-		Button(self.filePane, text = u"打开", command = lambda: self.onOpen(2)).grid(row = 1, column = 2)
-
-		self.optionsPane = PanedWindow(self.root)
-		self.optionsPane.pack(fill = BOTH, expand = True)
-
-		Label(self.optionsPane, text = u"算法:").grid(row = 0, column = 0)
+		Label(self.root, text = u"算法:").grid(row = 2, column = 0)
 		self.selectedAlgorihm.set("SM4")
-		OptionMenu(self.optionsPane, self.selectedAlgorihm, "SM2", "SM4").grid(row = 0, column = 1) #算法选择
+		OptionMenu(self.root, self.selectedAlgorihm, "SM2", "SM4").grid(row = 2, column = 1) #算法选择
 
-		Button(self.optionsPane, text = u"加密", command = self.onEncrypt).grid(row = 0, column = 2)
-		Button(self.optionsPane, text = u"解密", command = self.onDecrypt).grid(row = 0, column = 3)
-		Button(self.optionsPane, text = u"签名", command = self.onSign).grid(row = 0, column = 4)
-		Button(self.optionsPane, text = u"验证", command = self.onVerify).grid(row = 0, column = 5)
-
+		Button(self.root, text = u"加密", command = self.onEncrypt).grid(row = 2, column = 2)
+		Button(self.root, text = u"解密", command = self.onDecrypt).grid(row = 2, column = 3)
+		Button(self.root, text = u"签名", command = self.onSign).grid(row = 2, column = 4)
+		Button(self.root, text = u"验证", command = self.onVerify).grid(row = 2, column = 5)
+		Button(self.root, text = u"创建密钥对(SM2)", command = self.onGeneratePair).grid(row = 2, column = 6)
+		############控件没对齐
 		self.root.mainloop()
 
 	def onOpen(self, choise):
@@ -94,6 +93,9 @@ class GUI:
 	def onVerify(self):
 		pass
 
+	def onGeneratePair(self):
+		pass
+
 	def onExit(self):
 		self.root.destroy()
 
@@ -111,6 +113,7 @@ class GUI:
 
 	def sm2enc(self):
 		pass
+		File = filedialog.askopenfilename(initialdir = ".", title = u"选择公钥")
 
 	def sm2dec(self):
 		pass
@@ -119,7 +122,7 @@ class GUI:
 		from gmssl.sm4 import CryptSM4, SM4_ENCRYPT
 
 		self.root.attributes("-disabled", 1) #密码输入
-		inputKeyWindow = ask4key(self.root)
+		inputKeyWindow = ask4prompt(self.root, "key")
 		self.root.attributes("-disabled", 0)
 
 		key = bytes(self.hashKey(inputKeyWindow.key, 128), "UTF-8") #SM4需要128bits的密钥，这里取输入密码SM3哈希的前128bits
@@ -140,7 +143,7 @@ class GUI:
 		from gmssl.sm4 import CryptSM4, SM4_DECRYPT
 
 		self.root.attributes("-disabled", 1)
-		inputKeyWindow = ask4key(self.root)
+		inputKeyWindow = ask4prompt(self.root, "key")
 		self.root.attributes("-disabled", 0)
 
 		key = bytes(self.hashKey(inputKeyWindow.key, 128), "UTF-8")
