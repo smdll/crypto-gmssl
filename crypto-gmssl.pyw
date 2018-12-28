@@ -9,10 +9,11 @@ ICONDATA = "eNrtlUtMG1cUhn97xmaCzTCOGYbxAwgQe8z7YQzGpU7G+NGxjR2wcWihTVIrEi1FJBJN
 
 class ask4key():
 	def __init__(self, master):
-		#######这里要阻塞root
+		self.master = master
+		master.attributes("-disabled", 1)
 		self.top = Toplevel(master)
 		Label(self.top, text = u"请输入密钥：").grid(row = 0, column = 0)
-		self.keyInput = Entry(self.top)
+		self.keyInput = Entry(self.top, show = '*')
 		self.keyInput.grid(row = 0, column = 1)
 		Button(self.top, text = u"确认", command = self.cleanup).grid(row = 0, column = 2)
 		self.top.wait_window(self.top)
@@ -20,9 +21,9 @@ class ask4key():
 	def cleanup(self):
 		self.key = self.keyInput.get()
 		self.top.destroy()
-		#######这里要恢复root阻塞
+		self.master.attributes("-disabled", 1)
 
-class untitled:
+class GUI:
 	root = Tk()
 	selectedAlgorihm = StringVar(root)
 	def __init__(self):
@@ -53,7 +54,7 @@ class untitled:
 		self.optionsPane.pack(fill = BOTH, expand = True)
 
 		Label(self.optionsPane, text = u"算法:").grid(row = 0, column = 0)
-		self.selectedAlgorihm.set("SM2")
+		self.selectedAlgorihm.set("SM4")
 		OptionMenu(self.optionsPane, self.selectedAlgorihm, "SM2", "SM4").grid(row = 0, column = 1) #算法选择
 
 		Button(self.optionsPane, text = u"加密", command = self.onEncrypt).grid(row = 0, column = 2)
@@ -115,13 +116,13 @@ class untitled:
 	def sm4enc(self):
 		from gmssl.sm4 import CryptSM4, SM4_ENCRYPT, SM4_DECRYPT
 		inputKeyWindow = ask4key(self.root)
-		key = inputKeyWindow.key
+		key = bytes(inputKeyWindow.key)
 		with open(self.inputFile.get(), "rb") as f:
-			plainContent = f.read()
+			plainContent = bytes(f.read())
 		crypt_sm4 = CryptSM4()
 		crypt_sm4.set_key(key, SM4_ENCRYPT)
 		#######这里要先把明文转换成byte流
-		cipherContent = crypt_sm4.crypt_ecb(plainContent)
+		cipherContent = str(crypt_sm4.crypt_ecb(plainContent))
 
 		del(plainContent)
 		#######这里要先把密文转成字符串
@@ -145,4 +146,4 @@ class untitled:
 		del(plainContent)
 
 if __name__ == "__main__":
-	untitled()
+	GUI()
