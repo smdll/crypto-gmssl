@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # author = smdll
-from Tkinter import *
-import tkFileDialog, tkMessageBox
+from tkinter import *
+from tkinter import messagebox, filedialog
 import tempfile, zlib, base64, os
 
 #图标数据
@@ -9,19 +9,17 @@ ICONDATA = "eNrtlUtMG1cUhn97xmaCzTCOGYbxAwgQe8z7YQzGpU7G+NGxjR2wcWihTVIrEi1FJBJN
 
 class ask4key():
 	def __init__(self, master):
-		self.master = master
-		master.attributes("-disabled", 1)
 		self.top = Toplevel(master)
 		Label(self.top, text = u"请输入密钥：").grid(row = 0, column = 0)
 		self.keyInput = Entry(self.top, show = '*')
 		self.keyInput.grid(row = 0, column = 1)
+		self.keyInput.focus_set()
 		Button(self.top, text = u"确认", command = self.cleanup).grid(row = 0, column = 2)
 		self.top.wait_window(self.top)
 
 	def cleanup(self):
 		self.key = self.keyInput.get()
 		self.top.destroy()
-		self.master.attributes("-disabled", 1)
 
 class GUI:
 	root = Tk()
@@ -59,18 +57,19 @@ class GUI:
 
 		Button(self.optionsPane, text = u"加密", command = self.onEncrypt).grid(row = 0, column = 2)
 		Button(self.optionsPane, text = u"解密", command = self.onDecrypt).grid(row = 0, column = 3)
-		Button(self.optionsPane, text = u"校验签名", command = self.onVerify).grid(row = 0, column = 4)
+		Button(self.optionsPane, text = u"签名", command = self.onSign).grid(row = 0, column = 4)
+		Button(self.optionsPane, text = u"验证", command = self.onVerify).grid(row = 0, column = 5)
 
 		self.root.mainloop()
 
 	def onOpen(self, choise):
 		if choise == 1:
-			File = tkFileDialog.askopenfilenames(initialdir = ".", title = u"选择文件")
-			self.inputFile.select_clear()
+			File = filedialog.askopenfilename(initialdir = ".", title = u"选择文件")
+			self.inputFile.delete(0, "end")
 			self.inputFile.insert(0, File)
 		else:
-			File = tkFileDialog.asksaveasfilename(initialdir = ".", title = u"选择文件")
-			self.outputFile.select_clear()
+			File = filedialog.asksaveasfilename(initialdir = ".", title = u"选择文件")
+			self.outputFile.delete(0, "end")
 			self.outputFile.insert(0, File)
 
 	def onEncrypt(self):
@@ -89,6 +88,9 @@ class GUI:
 		else:
 			self.sm4dec()
 
+	def onSign(self):
+		pass
+
 	def onVerify(self):
 		pass
 
@@ -97,13 +99,13 @@ class GUI:
 
 	def checkFile(self):
 		if self.inputFile.get() == self.outputFile.get():
-			tkMessageBox.showerror(u"错误", u"输入文件与输出文件不能一致！")
+			messagebox.showerror(u"错误", u"输入文件与输出文件不能一致！")
 			return False
 		if not os.access(self.inputFile.get(), os.R_OK):
-			tkMessageBox.showerror(u"错误", u"输入文件无法打开！")
+			messagebox.showerror(u"错误", u"输入文件无法打开！")
 			return False
 		if os.access(self.outputFile.get(), os.W_OK):
-			tkMessageBox.showerror(u"错误", u"输出文件已存在！")
+			messagebox.showerror(u"错误", u"输出文件已存在！")
 			return False
 		return True
 
@@ -114,36 +116,55 @@ class GUI:
 		pass
 
 	def sm4enc(self):
-		from gmssl.sm4 import CryptSM4, SM4_ENCRYPT, SM4_DECRYPT
+		from gmssl.sm4 import CryptSM4, SM4_ENCRYPT
+
+		self.root.attributes("-disabled", 1) #密码输入
 		inputKeyWindow = ask4key(self.root)
-		key = bytes(inputKeyWindow.key)
+		self.root.attributes("-disabled", 0)
+
+		key = bytes(self.hashKey(inputKeyWindow.key, 128), "UTF-8") #SM4需要128bits的密钥，这里取输入密码SM3哈希的前128bits
 		with open(self.inputFile.get(), "rb") as f:
-			plainContent = bytes(f.read())
+			plainContent = f.read()
 		crypt_sm4 = CryptSM4()
 		crypt_sm4.set_key(key, SM4_ENCRYPT)
-		#######这里要先把明文转换成byte流
-		cipherContent = str(crypt_sm4.crypt_ecb(plainContent))
+		cipherContent = crypt_sm4.crypt_ecb(plainContent)
 
+		del(key)
 		del(plainContent)
-		#######这里要先把密文转成字符串
 		with open(self.outputFile.get(), "wb") as f:
 			f.write(cipherContent)
 		del(cipherContent)
+		messagebox.showinfo(u"加密成功", u"已写入%s"%self.outputFile.get())
 
 	def sm4dec(self):
-		from gmssl.sm4 import CryptSM4, SM4_ENCRYPT, SM4_DECRYPT
+		from gmssl.sm4 import CryptSM4, SM4_DECRYPT
+
+		self.root.attributes("-disabled", 1)
 		inputKeyWindow = ask4key(self.root)
-		key = inputKeyWindow.key
+		self.root.attributes("-disabled", 0)
+
+		key = bytes(self.hashKey(inputKeyWindow.key, 128), "UTF-8")
 		with open(self.inputFile.get(), "rb") as f:
 			cipherContent = f.read()
 		crypt_sm4 = CryptSM4()
 		crypt_sm4.set_key(key, SM4_DECRYPT)
 		plainContent = crypt_sm4.crypt_ecb(cipherContent)
 
+		del(key)
 		del(cipherContent)
 		with open(self.outputFile.get(), "wb") as f:
 			f.write(plainContent)
 		del(plainContent)
+		messagebox.showinfo(u"解密成功", u"已写入%s"%self.outputFile.get())
 
+	def hashKey(self, inputStr, lengthBits):
+		from gmssl.sm3 import sm3_hash
+
+		if lengthBits < 0: #范围控制
+			return
+		elif lengthBits > 256:
+			lengthBits = 256
+		lengthBytes = round(lengthBits / 8)
+		return sm3_hash(list(bytes(inputStr, "UTF-8")))[:lengthBytes]
 if __name__ == "__main__":
 	GUI()
