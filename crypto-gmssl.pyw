@@ -4,6 +4,7 @@ from tkinter import *
 from tkinter import messagebox, filedialog
 import tempfile, zlib, base64, os
 
+
 #图标数据
 ICONDATA = "eNrtlUtMG1cUhn97xmaCzTCOGYbxAwgQe8z7YQzGpU7G+NGxjR2wcWihTVIrEi1FJBJN3aIqRamaVLCoUKqoUlhUSFSkYkWlLiJRukbqojuWXbAo6qYSElKl0pnxk7Rdt4t8M3Pvufefc+89Z3Q0gEa+mpshtxS+oYB6AIL8yFO4gvy8CokymsIjYzKZQNM0ahkGY6KIEY8HDRyHVDyGtrY25BYW8MWDB7DwPMb8fmw9eYKO9nbcyGTg8/kwm05h+c4dfLW6is3Hj/Hlo0f4YWcHz589w+LtLOZuvInvt7awu7mJ7MwbcDgG0OuZwYi4hP7hm8gkE/j26VM4nT3ocU/D4bqKmbkf8f5nf+Dewz+RvfszXN0xXBb8eP32cySmv8atxZ+Qefs75D4/w8LHv2I0+AFCiVU8/OhDCB0i7q78jgZLC97N/YKu/kncm38Hi/d/Q+qtHbQ6fBgancPaJ/dxc+EA72Vv4dNcDuvr61hZWUE8FsPS0hKy2SzcAwNYXVvD/Pw8Tk9Psb+/j8PDQywvL2NjYwPHx8fY3t7G7Ows0uk0Tk5OsLe3h93dXRwcHODo6Ah93d04OzvDS17yv0OjQlS0lai69u8QhHwXdXq6TISOqEO5oQu6wW/9R/wGIq+zXI1bFN3iuKh2omyIIsuxhoI/O8VTpM7AGCmaZAw6MkIZyYjOUtAJ2d8UTk4xmevhUDLDTCUDwfj1hM7K6omizkupNBNPhcdTcSYdTQSTqWuKf0mvZUITlDSuI0MSNREK0qHQpOxf2p+biEiTFC9FvBJPTUpBWpKCJV32rzdJ0RgTj/Lj0TgTU9aPXlP0Ynz1PBm4QI8FjMHAGB0KhCOvBcKqTqi6mRNJo5E0kjJyZ1QMI18RP2fJU+zzg+L+epbjuHr5eoGK+DkLe9XEV1uVaYu5QTYtsl4+n9XW2tjUaL/UwnFW3t7W1Gyvaqnc39ZxxSkIrvZLFo7v6FRMb1VF/utaO3uFYY/QbWdr6J5eoa9PcNmry/l1D3qEV0Zf9Ti9I/5Bn+Bo9w4LjQ3mwv56s6I3DdmHBe9I9aCvt2toyKHo+sL+5jq6U3A1dRXX7+sfcLrsbMX3t112lM+XN0vnU85vtdkb5aDU+Gyt5+NT88OxhaTIlPNT+r4FVFnJtDoqrq+/aM5TZz5nXCzoGsO/UKwfgq6lShVH5IuQMenz9aW8cKFaXaqiZrXGGp02PyfrpE6r05wraq2+iirrWuKcu/Ljl4ta88Lkf8JfHMDVgw=="
 
@@ -38,12 +39,12 @@ class GUI:
 		self.filePane = PanedWindow(self.root)
 		self.filePane.pack(expand = True, fill = BOTH)
 		Label(self.filePane, text = u"输入文件：").grid(row = 0, column = 0)
-		self.inputFile = Entry(self.filePane, width = 35) #输入文件窗
+		self.inputFile = Entry(self.filePane, width = 50) #输入文件窗
 		self.inputFile.grid(row = 0, column = 1)
 		Button(self.filePane, text = u"打开", command = lambda: self.onOpen(1)).grid(row = 0, column = 2)
 
 		Label(self.filePane, text = u"输出文件：").grid(row = 1, column = 0)
-		self.outputFile = Entry(self.filePane, width = 35) #输出文件窗
+		self.outputFile = Entry(self.filePane, width = 50) #输出文件窗
 		self.outputFile.grid(row = 1, column = 1)
 		Button(self.filePane, text = u"打开", command = lambda: self.onOpen(2)).grid(row = 1, column = 2)
 
@@ -55,8 +56,8 @@ class GUI:
 
 		Button(self.optionPane, text = u"加密", command = self.onEncrypt).pack(side = LEFT)
 		Button(self.optionPane, text = u"解密", command = self.onDecrypt).pack(side = LEFT)
-		Button(self.optionPane, text = u"签名", command = self.onSign).pack(side = LEFT)
-		Button(self.optionPane, text = u"验证", command = self.onVerify).pack(side = LEFT)
+		Button(self.optionPane, text = u"签名(SM2)", command = self.onSign).pack(side = LEFT)
+		Button(self.optionPane, text = u"验证(SM2)", command = self.onVerify).pack(side = LEFT)
 		Button(self.optionPane, text = u"创建密钥对(SM2)", command = self.onGenerateKeyPair).pack(side = LEFT)
 		self.root.mainloop()
 
@@ -87,19 +88,17 @@ class GUI:
 			self.sm4dec()
 
 	def onSign(self):
-		if not self.selectedAlgorihm.get() == "SM2":
-			messagebox.showerror(u"错误", u"只能用SM2算法签名！")
-			return
 		self.sm2sign()
 
 	def onVerify(self):
-		if not self.selectedAlgorihm.get() == "SM2":
-			messagebox.showerror(u"错误", u"只能用SM2算法验证！")
-			return
 		self.sm2verify()
 
 	def onGenerateKeyPair(self):
-		pass
+		from utils.privateKey import PrivateKey
+		priKey = PrivateKey()
+		pubKey = priKey.publicKey()
+		print(priKey, pubKey)
+		########这里的公私钥是object
 
 	def onExit(self):
 		self.root.destroy()
@@ -114,6 +113,8 @@ class GUI:
 		from gmssl.sm2 import CryptSM2
 		from gmssl import func
 		priKeyFile = filedialog.askopenfilename(initialdir = ".", title = u"选择私钥", filetypes = [("Private key", ("*.pri")), ("All files", "*.*")])
+		if priKeyFile == '':
+			return
 		with open(priKeyFile, 'rt') as f:
 			priKey = f.read()
 		if len(priKey) < 32:
@@ -139,6 +140,8 @@ class GUI:
 	def sm2verify(self):
 		from gmssl.sm2 import CryptSM2
 		pubKeyFile = filedialog.askopenfilename(initialdir = ".", title = u"选择公钥", filetypes = [("Public key", ("*.pub")), ("All files", "*.*")])
+		if pubKeyFile == '':
+			return
 		with open(pubKeyFile, 'rt') as f:
 			pubKey = f.read()
 		if len(pubKey) < 64:
@@ -171,6 +174,8 @@ class GUI:
 		from gmssl.sm2 import CryptSM2
 
 		pubKeyFile = filedialog.askopenfilename(initialdir = ".", title = u"选择公钥", filetypes = [("Public key", ("*.pub")), ("All files", "*.*")])
+		if pubKeyFile == '':
+			return
 		with open(pubKeyFile, 'rt') as f:
 			pubKey = f.read()
 		if len(pubKey) < 64:
@@ -194,6 +199,8 @@ class GUI:
 		from gmssl.sm2 import CryptSM2
 
 		priKeyFile = filedialog.askopenfilename(initialdir = ".", title = u"选择私钥", filetypes = [("Private key", ("*.pri")), ("All files", "*.*")])
+		if priKeyFile == '':
+			return
 		with open(priKeyFile, 'rt') as f:
 			priKey = f.read()
 		if len(priKey) < 32:
