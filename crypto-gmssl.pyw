@@ -4,7 +4,6 @@ from tkinter import *
 from tkinter import messagebox, filedialog
 import tempfile, zlib, base64, os
 
-
 #图标数据
 ICONDATA = "eNrtlUtMG1cUhn97xmaCzTCOGYbxAwgQe8z7YQzGpU7G+NGxjR2wcWihTVIrEi1FJBJN3aIqRamaVLCoUKqoUlhUSFSkYkWlLiJRukbqojuWXbAo6qYSElKl0pnxk7Rdt4t8M3Pvufefc+89Z3Q0gEa+mpshtxS+oYB6AIL8yFO4gvy8CokymsIjYzKZQNM0ahkGY6KIEY8HDRyHVDyGtrY25BYW8MWDB7DwPMb8fmw9eYKO9nbcyGTg8/kwm05h+c4dfLW6is3Hj/Hlo0f4YWcHz589w+LtLOZuvInvt7awu7mJ7MwbcDgG0OuZwYi4hP7hm8gkE/j26VM4nT3ocU/D4bqKmbkf8f5nf+Dewz+RvfszXN0xXBb8eP32cySmv8atxZ+Qefs75D4/w8LHv2I0+AFCiVU8/OhDCB0i7q78jgZLC97N/YKu/kncm38Hi/d/Q+qtHbQ6fBgancPaJ/dxc+EA72Vv4dNcDuvr61hZWUE8FsPS0hKy2SzcAwNYXVvD/Pw8Tk9Psb+/j8PDQywvL2NjYwPHx8fY3t7G7Ows0uk0Tk5OsLe3h93dXRwcHODo6Ah93d04OzvDS17yv0OjQlS0lai69u8QhHwXdXq6TISOqEO5oQu6wW/9R/wGIq+zXI1bFN3iuKh2omyIIsuxhoI/O8VTpM7AGCmaZAw6MkIZyYjOUtAJ2d8UTk4xmevhUDLDTCUDwfj1hM7K6omizkupNBNPhcdTcSYdTQSTqWuKf0mvZUITlDSuI0MSNREK0qHQpOxf2p+biEiTFC9FvBJPTUpBWpKCJV32rzdJ0RgTj/Lj0TgTU9aPXlP0Ynz1PBm4QI8FjMHAGB0KhCOvBcKqTqi6mRNJo5E0kjJyZ1QMI18RP2fJU+zzg+L+epbjuHr5eoGK+DkLe9XEV1uVaYu5QTYtsl4+n9XW2tjUaL/UwnFW3t7W1Gyvaqnc39ZxxSkIrvZLFo7v6FRMb1VF/utaO3uFYY/QbWdr6J5eoa9PcNmry/l1D3qEV0Zf9Ti9I/5Bn+Bo9w4LjQ3mwv56s6I3DdmHBe9I9aCvt2toyKHo+sL+5jq6U3A1dRXX7+sfcLrsbMX3t112lM+XN0vnU85vtdkb5aDU+Gyt5+NT88OxhaTIlPNT+r4FVFnJtDoqrq+/aM5TZz5nXCzoGsO/UKwfgq6lShVH5IuQMenz9aW8cKFaXaqiZrXGGp02PyfrpE6r05wraq2+iirrWuKcu/Ljl4ta88Lkf8JfHMDVgw=="
 
@@ -227,7 +226,10 @@ class GUI:
 		inputKeyWindow = acquireKey(self.root)
 		self.root.attributes("-disabled", 0)
 
-		key = bytes(self.hashKey(inputKeyWindow.key, 128), "UTF-8") #SM4需要128bits的密钥，这里取输入密码SM3哈希的前128bits
+		try:
+			key = bytes(self.hashKey(inputKeyWindow.key, 128), "UTF-8") #SM4需要128bits的密钥，这里取输入密码SM3哈希的前128bits
+		except AttributeError:
+			return
 		with open(self.inputFile.get(), "rb") as f:
 			plainContent = f.read()
 		crypt_sm4 = CryptSM4()
@@ -248,7 +250,10 @@ class GUI:
 		inputKeyWindow = acquireKey(self.root)
 		self.root.attributes("-disabled", 0)
 
-		key = bytes(self.hashKey(inputKeyWindow.key, 128), "UTF-8")
+		try:
+			key = bytes(self.hashKey(inputKeyWindow.key, 128), "UTF-8") #SM4需要128bits的密钥，这里取输入密码SM3哈希的前128bits
+		except AttributeError:
+			return
 		with open(self.inputFile.get(), "rb") as f:
 			cipherContent = f.read()
 		crypt_sm4 = CryptSM4()
