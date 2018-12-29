@@ -7,14 +7,10 @@ import tempfile, zlib, base64, os
 #图标数据
 ICONDATA = "eNrtlUtMG1cUhn97xmaCzTCOGYbxAwgQe8z7YQzGpU7G+NGxjR2wcWihTVIrEi1FJBJN3aIqRamaVLCoUKqoUlhUSFSkYkWlLiJRukbqojuWXbAo6qYSElKl0pnxk7Rdt4t8M3Pvufefc+89Z3Q0gEa+mpshtxS+oYB6AIL8yFO4gvy8CokymsIjYzKZQNM0ahkGY6KIEY8HDRyHVDyGtrY25BYW8MWDB7DwPMb8fmw9eYKO9nbcyGTg8/kwm05h+c4dfLW6is3Hj/Hlo0f4YWcHz589w+LtLOZuvInvt7awu7mJ7MwbcDgG0OuZwYi4hP7hm8gkE/j26VM4nT3ocU/D4bqKmbkf8f5nf+Dewz+RvfszXN0xXBb8eP32cySmv8atxZ+Qefs75D4/w8LHv2I0+AFCiVU8/OhDCB0i7q78jgZLC97N/YKu/kncm38Hi/d/Q+qtHbQ6fBgancPaJ/dxc+EA72Vv4dNcDuvr61hZWUE8FsPS0hKy2SzcAwNYXVvD/Pw8Tk9Psb+/j8PDQywvL2NjYwPHx8fY3t7G7Ows0uk0Tk5OsLe3h93dXRwcHODo6Ah93d04OzvDS17yv0OjQlS0lai69u8QhHwXdXq6TISOqEO5oQu6wW/9R/wGIq+zXI1bFN3iuKh2omyIIsuxhoI/O8VTpM7AGCmaZAw6MkIZyYjOUtAJ2d8UTk4xmevhUDLDTCUDwfj1hM7K6omizkupNBNPhcdTcSYdTQSTqWuKf0mvZUITlDSuI0MSNREK0qHQpOxf2p+biEiTFC9FvBJPTUpBWpKCJV32rzdJ0RgTj/Lj0TgTU9aPXlP0Ynz1PBm4QI8FjMHAGB0KhCOvBcKqTqi6mRNJo5E0kjJyZ1QMI18RP2fJU+zzg+L+epbjuHr5eoGK+DkLe9XEV1uVaYu5QTYtsl4+n9XW2tjUaL/UwnFW3t7W1Gyvaqnc39ZxxSkIrvZLFo7v6FRMb1VF/utaO3uFYY/QbWdr6J5eoa9PcNmry/l1D3qEV0Zf9Ti9I/5Bn+Bo9w4LjQ3mwv56s6I3DdmHBe9I9aCvt2toyKHo+sL+5jq6U3A1dRXX7+sfcLrsbMX3t112lM+XN0vnU85vtdkb5aDU+Gyt5+NT88OxhaTIlPNT+r4FVFnJtDoqrq+/aM5TZz5nXCzoGsO/UKwfgq6lShVH5IuQMenz9aW8cKFaXaqiZrXGGp02PyfrpE6r05wraq2+iirrWuKcu/Ljl4ta88Lkf8JfHMDVgw=="
 
-class ask4prompt():
-	def __init__(self, master, type):
+class acquireKey():
+	def __init__(self, master):
 		self.top = Toplevel(master)
-		if type == "key":
-			prompt = u"请输入密钥："
-		else:
-			prompt == u"请输入签名："
-		Label(self.top, text = prompt).grid(row = 0, column = 0)
+		Label(self.top, text = u"请输入密码：").grid(row = 0, column = 0)
 		self.keyInput = Entry(self.top, show = '*')
 		self.keyInput.grid(row = 0, column = 1)
 		self.keyInput.focus_set()
@@ -61,7 +57,7 @@ class GUI:
 		Button(self.optionPane, text = u"解密", command = self.onDecrypt).pack(side = LEFT)
 		Button(self.optionPane, text = u"签名", command = self.onSign).pack(side = LEFT)
 		Button(self.optionPane, text = u"验证", command = self.onVerify).pack(side = LEFT)
-		Button(self.optionPane, text = u"创建密钥对(SM2)", command = self.onGeneratePair).pack(side = LEFT)
+		Button(self.optionPane, text = u"创建密钥对(SM2)", command = self.onGenerateKeyPair).pack(side = LEFT)
 		self.root.mainloop()
 
 	def onOpen(self, choise):
@@ -75,7 +71,7 @@ class GUI:
 			self.outputFile.insert(0, File)
 
 	def onEncrypt(self):
-		if not self.checkFile():
+		if not self.checkFile(self.inputFile.get()):
 			return
 		if self.selectedAlgorihm.get() == "SM2":
 			self.sm2enc()
@@ -83,7 +79,7 @@ class GUI:
 			self.sm4enc()
 
 	def onDecrypt(self):
-		if not self.checkFile():
+		if not self.checkFile(self.inputFile.get()):
 			return
 		if self.selectedAlgorihm.get() == "SM2":
 			self.sm2dec()
@@ -91,28 +87,85 @@ class GUI:
 			self.sm4dec()
 
 	def onSign(self):
-		pass
+		if not self.selectedAlgorihm.get() == "SM2":
+			messagebox.showerror(u"错误", u"只能用SM2算法签名！")
+			return
+		self.sm2sign()
 
 	def onVerify(self):
-		pass
+		if not self.selectedAlgorihm.get() == "SM2":
+			messagebox.showerror(u"错误", u"只能用SM2算法验证！")
+			return
+		self.sm2verify()
 
-	def onGeneratePair(self):
+	def onGenerateKeyPair(self):
 		pass
 
 	def onExit(self):
 		self.root.destroy()
 
-	def checkFile(self):
-		if self.inputFile.get() == self.outputFile.get():
-			messagebox.showerror(u"错误", u"输入文件与输出文件不能一致！")
-			return False
-		if not os.access(self.inputFile.get(), os.R_OK):
+	def checkFile(self, filepath):
+		if not os.access(filepath, os.R_OK):
 			messagebox.showerror(u"错误", u"输入文件无法打开！")
 			return False
-		if os.access(self.outputFile.get(), os.W_OK):
-			messagebox.showerror(u"错误", u"输出文件已存在！")
-			return False
 		return True
+
+	def sm2sign(self):
+		from gmssl.sm2 import CryptSM2
+		from gmssl import func
+		priKeyFile = filedialog.askopenfilename(initialdir = ".", title = u"选择私钥", filetypes = [("Private key", ("*.pri")), ("All files", "*.*")])
+		with open(priKeyFile, 'rt') as f:
+			priKey = f.read()
+		if len(priKey) < 32:
+			messagebox.showerror(u"错误", u"私钥不正确！")
+			del(priKey)
+			return
+
+		crypt_sm2 = CryptSM2(public_key = None, private_key = priKey)
+		with open(self.inputFile.get(), "rb") as f:
+			plainContent = f.read()
+		random_hex_str = func.random_hex(crypt_sm2.para_len)
+		signature = crypt_sm2.sign(plainContent, random_hex_str)
+
+		del(priKey)
+		del(plainContent)
+		del(random_hex_str)
+		signFile = "%s.sig"%self.inputFile.get()
+		with open(signFile, "wt") as f:
+			f.write(signature)
+		del(signature)
+		messagebox.showinfo(u"签名结束", u"已写入%s"%signFile)
+
+	def sm2verify(self):
+		from gmssl.sm2 import CryptSM2
+		pubKeyFile = filedialog.askopenfilename(initialdir = ".", title = u"选择公钥", filetypes = [("Public key", ("*.pub")), ("All files", "*.*")])
+		with open(pubKeyFile, 'rt') as f:
+			pubKey = f.read()
+		if len(pubKey) < 64:
+			messagebox.showerror(u"错误", u"公钥不正确！")
+			del(pubKey)
+			return
+
+		signFile = filedialog.askopenfilename(initialdir = ".", title = u"选择签名", filetypes = [("Signature file", ("*.sig")), ("All files", "*.*")])
+		with open(signFile, 'rt') as f:
+			signature = f.read()
+		if not len(signature) == 128:
+			messagebox.showerror(u"错误", u"公钥不正确！")
+			del(pubKey)
+			del(signature)
+			return
+
+		crypt_sm2 = CryptSM2(public_key = pubKey, private_key = None)
+		with open(self.inputFile.get(), "rb") as f:
+			plainContent = f.read()
+		if crypt_sm2.verify(signature, plainContent):
+			messagebox.showinfo(u"验证结束", u"签名正确！")
+		else:
+			messagebox.showwarning(u"验证结束", u"签名不正确！")
+
+		del(pubKey)
+		del(plainContent)
+		del(signature)
 
 	def sm2enc(self):
 		from gmssl.sm2 import CryptSM2
@@ -140,7 +193,7 @@ class GUI:
 	def sm2dec(self):
 		from gmssl.sm2 import CryptSM2
 
-		priKeyFile = filedialog.askopenfilename(initialdir = ".", title = u"选择私钥", filetypes = [("Public key", ("*.pri")), ("All files", "*.*")])
+		priKeyFile = filedialog.askopenfilename(initialdir = ".", title = u"选择私钥", filetypes = [("Private key", ("*.pri")), ("All files", "*.*")])
 		with open(priKeyFile, 'rt') as f:
 			priKey = f.read()
 		if len(priKey) < 32:
@@ -164,7 +217,7 @@ class GUI:
 		from gmssl.sm4 import CryptSM4, SM4_ENCRYPT
 
 		self.root.attributes("-disabled", 1) #密码输入
-		inputKeyWindow = ask4prompt(self.root, "key")
+		inputKeyWindow = acquireKey(self.root)
 		self.root.attributes("-disabled", 0)
 
 		key = bytes(self.hashKey(inputKeyWindow.key, 128), "UTF-8") #SM4需要128bits的密钥，这里取输入密码SM3哈希的前128bits
@@ -185,7 +238,7 @@ class GUI:
 		from gmssl.sm4 import CryptSM4, SM4_DECRYPT
 
 		self.root.attributes("-disabled", 1)
-		inputKeyWindow = ask4prompt(self.root, "key")
+		inputKeyWindow = acquireKey(self.root)
 		self.root.attributes("-disabled", 0)
 
 		key = bytes(self.hashKey(inputKeyWindow.key, 128), "UTF-8")
@@ -201,7 +254,6 @@ class GUI:
 			f.write(plainContent)
 		del(plainContent)
 		messagebox.showinfo(u"解密结束", u"已写入%s"%self.outputFile.get())
-		##########解密不对
 
 	def hashKey(self, inputStr, lengthBits):
 		from gmssl.sm3 import sm3_hash
