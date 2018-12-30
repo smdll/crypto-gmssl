@@ -19,7 +19,7 @@ class PrivateKey:
 		return PublicKey(xPublicKey, yPublicKey, curve)
 
 	def toString(self):
-		return "020{}".format(str(hex(self.secret))[2:-1])
+		return "{}".format(str(hex(self.secret))[2:].zfill(64))
 
 	@classmethod
 	def fromPem(cls, string):

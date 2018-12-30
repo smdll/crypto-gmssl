@@ -50,7 +50,7 @@ class GUI:
 		self.optionPane = PanedWindow(self.root)
 		self.optionPane.pack(expand = True, fill = BOTH)
 		Label(self.optionPane, text = u"算法:").pack(side = LEFT)
-		self.selectedAlgorihm.set("SM4")
+		self.selectedAlgorihm.set("SM2")
 		OptionMenu(self.optionPane, self.selectedAlgorihm, "SM2", "SM4").pack(side = LEFT) #算法选择
 
 		Button(self.optionPane, text = u"加密", command = self.onEncrypt).pack(side = LEFT)
@@ -71,7 +71,7 @@ class GUI:
 			self.outputFile.insert(0, File)
 
 	def onEncrypt(self):
-		if not self.checkFile(self.inputFile.get()):
+		if not (self.checkFile(self.inputFile.get(), 'r') or self.checkFile(self.outputFile.get(), 'w')):
 			return
 		if self.selectedAlgorihm.get() == "SM2":
 			self.sm2enc()
@@ -79,7 +79,7 @@ class GUI:
 			self.sm4enc()
 
 	def onDecrypt(self):
-		if not self.checkFile(self.inputFile.get()):
+		if not (self.checkFile(self.inputFile.get(), 'r') or self.checkFile(self.outputFile.get(), 'w')):
 			return
 		if self.selectedAlgorihm.get() == "SM2":
 			self.sm2dec()
@@ -87,25 +87,40 @@ class GUI:
 			self.sm4dec()
 
 	def onSign(self):
+		if not self.checkFile(self.inputFile.get(), 'r'):
+			return
 		self.sm2sign()
 
 	def onVerify(self):
+		if not self.checkFile(self.inputFile.get(), 'r'):
+			return
 		self.sm2verify()
 
 	def onGenerateKeyPair(self):
+		keyPairPath = filedialog.askdirectory(title = u"选择密钥对路径")
+		if keyPairPath == '':
+			return
 		from utils.privateKey import PrivateKey
 		priKey = PrivateKey()
 		pubKey = priKey.publicKey()
-		print(priKey, pubKey)
-		########这里的公私钥是object
+		with open("%s\\key.pri"%keyPairPath, "wt") as f:
+			f.write(priKey.toString())
+		with open("%s\\key.pub"%keyPairPath, "wt") as f:
+			f.write(pubKey.toString(compressed = False))
+		messagebox.showinfo(u"生成结束", u"已写入%s\\key.pri\n%s\\key.pub"%(keyPairPath, keyPairPath))
 
 	def onExit(self):
 		self.root.destroy()
 
-	def checkFile(self, filepath):
-		if not os.access(filepath, os.R_OK):
-			messagebox.showerror(u"错误", u"输入文件无法打开！")
-			return False
+	def checkFile(self, filepath, mode):
+		if mode == 'r':
+			if not os.access(filepath, os.R_OK):
+				messagebox.showerror(u"错误", u"输入文件无法打开！")
+				return False
+		else:
+			if not os.access(filepath, os.W_OK):
+				messagebox.showerror(u"错误", u"输出文件无效！")
+				return False
 		return True
 
 	def sm2sign(self):
@@ -177,7 +192,7 @@ class GUI:
 			return
 		with open(pubKeyFile, 'rt') as f:
 			pubKey = f.read()
-		if len(pubKey) < 64:
+		if len(pubKey) < 128:
 			messagebox.showerror(u"错误", u"公钥不正确！")
 			del(pubKey)
 			return
@@ -202,7 +217,7 @@ class GUI:
 			return
 		with open(priKeyFile, 'rt') as f:
 			priKey = f.read()
-		if len(priKey) < 32:
+		if len(priKey) < 64:
 			messagebox.showerror(u"错误", u"私钥不正确！")
 			del(priKey)
 			return

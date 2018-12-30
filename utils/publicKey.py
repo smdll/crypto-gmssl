@@ -13,8 +13,8 @@ class PublicKey:
 
 	def toString(self, compressed=True):
 		return {
-			True:  "020{}".format(str(hex(self.x))[2:-1]),
-			False: "040{}{}".format(str(hex(self.x))[2:-1], str(hex(self.y))[2:-1])
+			True:  str(hex(self.x))[2:],
+			False: "{}{}".format(str(hex(self.x))[2:].zfill(64), str(hex(self.y))[2:].zfill(64))
 		}.get(compressed)
 
 	@classmethod
