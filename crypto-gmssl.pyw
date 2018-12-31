@@ -10,14 +10,15 @@ ICONDATA = "eNrtlUtMG1cUhn97xmaCzTCOGYbxAwgQe8z7YQzGpU7G+NGxjR2wcWihTVIrEi1FJBJN
 class acquireKey():
 	def __init__(self, master):
 		self.top = Toplevel(master)
-		Label(self.top, text = u"请输入密码：").grid(row = 0, column = 0)
+		self.top.resizable(width = False, height = False) 
+		Label(self.top, text = u"请输入密码：").pack(side = LEFT)
 		self.keyInput = Entry(self.top, show = '*')
-		self.keyInput.grid(row = 0, column = 1)
+		self.keyInput.pack(side = LEFT, expand = True)
 		self.keyInput.focus_set()
-		Button(self.top, text = u"确认", command = self.cleanup).grid(row = 0, column = 2)
+		Button(self.top, text = u"确认", command = self.cleanUp).pack(side = LEFT)
 		self.top.wait_window(self.top)
 
-	def cleanup(self):
+	def cleanUp(self):
 		self.key = self.keyInput.get()
 		self.top.destroy()
 
@@ -35,29 +36,32 @@ class GUI:
 		self.root.resizable(width = False, height = False) #禁止改变窗口尺寸
 		self.root.title(u"gmssl-python")
 
-		self.filePane = PanedWindow(self.root)
-		self.filePane.pack(expand = True, fill = BOTH)
-		Label(self.filePane, text = u"输入文件：").grid(row = 0, column = 0)
-		self.inputFile = Entry(self.filePane, width = 50) #输入文件窗
-		self.inputFile.grid(row = 0, column = 1)
-		Button(self.filePane, text = u"打开", command = lambda: self.onOpen(1)).grid(row = 0, column = 2)
+		self.inputFilePane = PanedWindow(self.root)
+		self.inputFilePane.pack(expand = True, fill = BOTH)
+		Label(self.inputFilePane, text = u"输入文件：").pack(side = LEFT)
+		self.inputFile = Entry(self.inputFilePane) #输入文件窗
+		self.inputFile.pack(side = LEFT, expand = True, fill = BOTH)
+		Button(self.inputFilePane, text = u"打开", command = lambda: self.onOpen(1)).pack(side = LEFT)
 
-		Label(self.filePane, text = u"输出文件：").grid(row = 1, column = 0)
-		self.outputFile = Entry(self.filePane, width = 50) #输出文件窗
-		self.outputFile.grid(row = 1, column = 1)
-		Button(self.filePane, text = u"打开", command = lambda: self.onOpen(2)).grid(row = 1, column = 2)
+		self.outputFilePane = PanedWindow(self.root)
+		self.outputFilePane.pack(expand = True, fill = BOTH)
+		Label(self.outputFilePane, text = u"输出文件：").pack(side = LEFT)
+		self.outputFile = Entry(self.outputFilePane) #输出文件窗
+		self.outputFile.pack(side = LEFT, expand = True, fill = BOTH)
+		Button(self.outputFilePane, text = u"打开", command = lambda: self.onOpen(2)).pack(side = LEFT)
 
 		self.optionPane = PanedWindow(self.root)
 		self.optionPane.pack(expand = True, fill = BOTH)
 		Label(self.optionPane, text = u"算法:").pack(side = LEFT)
 		self.selectedAlgorihm.set("SM2")
-		OptionMenu(self.optionPane, self.selectedAlgorihm, "SM2", "SM4").pack(side = LEFT) #算法选择
+		OptionMenu(self.optionPane, self.selectedAlgorihm, "SM2", "SM4").pack(side = LEFT, expand = True, fill = BOTH) #算法选择
 
 		Button(self.optionPane, text = u"加密", command = self.onEncrypt).pack(side = LEFT)
 		Button(self.optionPane, text = u"解密", command = self.onDecrypt).pack(side = LEFT)
 		Button(self.optionPane, text = u"签名(SM2)", command = self.onSign).pack(side = LEFT)
 		Button(self.optionPane, text = u"验证(SM2)", command = self.onVerify).pack(side = LEFT)
 		Button(self.optionPane, text = u"创建密钥对(SM2)", command = self.onGenerateKeyPair).pack(side = LEFT)
+		Button(self.optionPane, text = u"计算哈希(SM3)", command = self.onGenerateHash).pack(side = LEFT)
 		self.root.mainloop()
 
 	def onOpen(self, choise):
@@ -74,33 +78,33 @@ class GUI:
 		if not (self.checkFile(self.inputFile.get(), 'r') or self.checkFile(self.outputFile.get(), 'w')):
 			return
 		if self.selectedAlgorihm.get() == "SM2":
-			self.sm2enc()
+			self.sm2Encrypt()
 		else:
-			self.sm4enc()
+			self.sm4Encrypt()
 
 	def onDecrypt(self):
 		if not (self.checkFile(self.inputFile.get(), 'r') or self.checkFile(self.outputFile.get(), 'w')):
 			return
 		if self.selectedAlgorihm.get() == "SM2":
-			self.sm2dec()
+			self.sm2Decrypt()
 		else:
-			self.sm4dec()
+			self.sm4Decrypt()
 
 	def onSign(self):
 		if not self.checkFile(self.inputFile.get(), 'r'):
 			return
-		self.sm2sign()
+		self.sm2Sign()
 
 	def onVerify(self):
 		if not self.checkFile(self.inputFile.get(), 'r'):
 			return
-		self.sm2verify()
+		self.sm2Verify()
 
 	def onGenerateKeyPair(self):
 		keyPairPath = filedialog.askdirectory(title = u"选择密钥对路径")
 		if keyPairPath == '':
 			return
-		from utils.privateKey import PrivateKey
+		from utils import PrivateKey
 		priKey = PrivateKey()
 		pubKey = priKey.publicKey()
 		with open("%s\\key.pri"%keyPairPath, "wt") as f:
@@ -108,6 +112,13 @@ class GUI:
 		with open("%s\\key.pub"%keyPairPath, "wt") as f:
 			f.write(pubKey.toString(compressed = False))
 		messagebox.showinfo(u"生成结束", u"已写入%s\\key.pri\n%s\\key.pub"%(keyPairPath, keyPairPath))
+
+	def onGenerateHash(self):
+		if not self.checkFile(self.inputFile.get(), 'r'):
+			return
+		with open(self.inputFile.get(), "rb") as f:
+			hash = self.sm3Hash(inputRaw = f.read())
+		messagebox.showinfo(u"哈希结果", "%s"%hash)
 
 	def onExit(self):
 		self.root.destroy()
@@ -123,7 +134,7 @@ class GUI:
 				return False
 		return True
 
-	def sm2sign(self):
+	def sm2Sign(self):
 		from gmssl.sm2 import CryptSM2
 		from gmssl import func
 		priKeyFile = filedialog.askopenfilename(initialdir = ".", title = u"选择私钥", filetypes = [("Private key", ("*.pri")), ("All files", "*.*")])
@@ -151,7 +162,7 @@ class GUI:
 		del(signature)
 		messagebox.showinfo(u"签名结束", u"已写入%s"%signFile)
 
-	def sm2verify(self):
+	def sm2Verify(self):
 		from gmssl.sm2 import CryptSM2
 		pubKeyFile = filedialog.askopenfilename(initialdir = ".", title = u"选择公钥", filetypes = [("Public key", ("*.pub")), ("All files", "*.*")])
 		if pubKeyFile == '':
@@ -184,7 +195,7 @@ class GUI:
 		del(plainContent)
 		del(signature)
 
-	def sm2enc(self):
+	def sm2Encrypt(self):
 		from gmssl.sm2 import CryptSM2
 
 		pubKeyFile = filedialog.askopenfilename(initialdir = ".", title = u"选择公钥", filetypes = [("Public key", ("*.pub")), ("All files", "*.*")])
@@ -209,7 +220,7 @@ class GUI:
 		del(cipherContent)
 		messagebox.showinfo(u"加密结束", u"已写入%s"%self.outputFile.get())
 
-	def sm2dec(self):
+	def sm2Decrypt(self):
 		from gmssl.sm2 import CryptSM2
 
 		priKeyFile = filedialog.askopenfilename(initialdir = ".", title = u"选择私钥", filetypes = [("Private key", ("*.pri")), ("All files", "*.*")])
@@ -234,7 +245,7 @@ class GUI:
 		del(plainContent)
 		messagebox.showinfo(u"解密结束", u"已写入%s"%self.outputFile.get())
 
-	def sm4enc(self):
+	def sm4Encrypt(self):
 		from gmssl.sm4 import CryptSM4, SM4_ENCRYPT
 
 		self.root.attributes("-disabled", 1) #密码输入
@@ -242,8 +253,8 @@ class GUI:
 		self.root.attributes("-disabled", 0)
 
 		try:
-			key = bytes(self.hashKey(inputKeyWindow.key, 128), "UTF-8") #SM4需要128bits的密钥，这里取输入密码SM3哈希的前128bits
-		except AttributeError:
+			key = bytes(self.sm3Hash(inputStr = inputKeyWindow.key, lengthInBits = 128), "UTF-8") #SM4需要128bits的密钥，这里取输入密码SM3哈希的前128bits
+		except:
 			return
 		with open(self.inputFile.get(), "rb") as f:
 			plainContent = f.read()
@@ -258,7 +269,7 @@ class GUI:
 		del(cipherContent)
 		messagebox.showinfo(u"加密结束", u"已写入%s"%self.outputFile.get())
 
-	def sm4dec(self):
+	def sm4Decrypt(self):
 		from gmssl.sm4 import CryptSM4, SM4_DECRYPT
 
 		self.root.attributes("-disabled", 1)
@@ -266,8 +277,8 @@ class GUI:
 		self.root.attributes("-disabled", 0)
 
 		try:
-			key = bytes(self.hashKey(inputKeyWindow.key, 128), "UTF-8") #SM4需要128bits的密钥，这里取输入密码SM3哈希的前128bits
-		except AttributeError:
+			key = bytes(self.sm3Hash(inputStr = inputKeyWindow.key, lengthInBits = 128), "UTF-8") #SM4需要128bits的密钥，这里取输入密码SM3哈希的前128bits
+		except:
 			return
 		with open(self.inputFile.get(), "rb") as f:
 			cipherContent = f.read()
@@ -282,14 +293,18 @@ class GUI:
 		del(plainContent)
 		messagebox.showinfo(u"解密结束", u"已写入%s"%self.outputFile.get())
 
-	def hashKey(self, inputStr, lengthBits):
+	def sm3Hash(self, inputStr = None, inputRaw = None, lengthInBits = 256):
 		from gmssl.sm3 import sm3_hash
 
-		if lengthBits < 0: #范围控制
+		if not (inputStr or inputRaw):
 			return
-		elif lengthBits > 256:
-			lengthBits = 256
-		lengthBytes = round(lengthBits / 8)
-		return sm3_hash(list(bytes(inputStr, "UTF-8")))[:lengthBytes]
+		if lengthInBits < 0 or lengthInBits > 256: #范围控制
+			return
+		lengthInBytes = round(lengthInBits / 8)
+		if inputStr:
+			return sm3_hash(list(bytes(inputStr, "UTF-8")))[:lengthInBytes]
+		else:
+			return sm3_hash(list(inputRaw))[:lengthInBytes]
+
 if __name__ == "__main__":
 	GUI()
