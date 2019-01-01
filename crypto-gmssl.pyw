@@ -104,7 +104,7 @@ class GUI:
 		keyPairPath = filedialog.askdirectory(title = u"选择密钥对路径")
 		if keyPairPath == '':
 			return
-		from utils import PrivateKey
+		from gmssl.utils import PrivateKey
 		priKey = PrivateKey()
 		pubKey = priKey.publicKey()
 		with open("%s\\key.pri"%keyPairPath, "wt") as f:
